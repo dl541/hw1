@@ -98,7 +98,8 @@ class EWiseDiv(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        lhs, rhs = node.inputs
+        return out_grad * 1 / rhs, -out_grad * lhs / (rhs * rhs)
         ### END YOUR SOLUTION
 
 
@@ -117,7 +118,7 @@ class DivScalar(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return out_grad / self.scalar
         ### END YOUR SOLUTION
 
 
@@ -139,7 +140,7 @@ class Transpose(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return transpose(out_grad, self.axes)
         ### END YOUR SOLUTION
 
 
@@ -158,7 +159,7 @@ class Reshape(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return reshape(out_grad, self.shape[::-1])
         ### END YOUR SOLUTION
 
 
@@ -175,7 +176,8 @@ class BroadcastTo(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        input_shape = node.inputs[0].shape
+        return Tensor(array_api.ones(input_shape) * self.shape[1])
         ### END YOUR SOLUTION
 
 
@@ -194,7 +196,7 @@ class Summation(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return Tensor(array_api.ones(node.inputs[0].shape))
         ### END YOUR SOLUTION
 
 
@@ -210,7 +212,8 @@ class MatMul(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        lhs, rhs = node.inputs
+        return out_grad @ transpose(rhs), transpose(lhs) @ out_grad
         ### END YOUR SOLUTION
 
 
@@ -226,7 +229,7 @@ class Negate(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return -out_grad
         ### END YOUR SOLUTION
 
 
@@ -281,4 +284,3 @@ class ReLU(TensorOp):
 
 def relu(a):
     return ReLU()(a)
-
