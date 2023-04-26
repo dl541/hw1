@@ -1,7 +1,7 @@
 """Core data structures."""
 import needle
-from typing import List, Optional, NamedTuple, Tuple, Union
-from collections import namedtuple
+from typing import List, Optional, NamedTuple, Set, Tuple, Union
+from collections import defaultdict, namedtuple
 import numpy
 
 # needle version
@@ -411,14 +411,25 @@ def find_topo_sort(node_list: List[Value]) -> List[Value]:
     sort.
     """
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    topoOrder = []
+    visited = set()
+    for node in node_list:
+        topo_sort_dfs(node, visited, topoOrder)
+    return topoOrder
     ### END YOUR SOLUTION
 
 
-def topo_sort_dfs(node, visited, topo_order):
+def topo_sort_dfs(node: Value, visited: Set[Value], topo_order: List[Value]):
     """Post-order DFS"""
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    if node in visited:
+        return
+    if len(node.inputs) > 0:
+        for parent in node.inputs:
+            topo_sort_dfs(parent, visited, topo_order)
+                
+    topo_order.append(node)
+    visited.add(node)
     ### END YOUR SOLUTION
 
 
