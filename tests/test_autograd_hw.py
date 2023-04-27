@@ -290,6 +290,7 @@ def gradient_check(f, *args, tol=1e-6, backward=False, **kwargs):
         out = f(*args, **kwargs).sum()
         out.backward()
         computed_grads = [a.grad.numpy() for a in args]
+
     error = sum(
         np.linalg.norm(computed_grads[i] - numerical_grads[i])
         for i in range(len(args))

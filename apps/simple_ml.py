@@ -1,10 +1,11 @@
+import needle as ndl
 import struct
 import gzip
 import numpy as np
-
 import sys
+
+from needle.autograd import Tensor, Value
 sys.path.append('python/')
-import needle as ndl
 
 
 def parse_mnist(image_filename, label_filename):
@@ -45,7 +46,7 @@ def parse_mnist(image_filename, label_filename):
     ### END YOUR SOLUTION
 
 
-def softmax_loss(Z, y_one_hot):
+def softmax_loss(Z, y_one_hot) -> Tensor:
     """ Return softmax loss.  Note that for the purposes of this assignment,
     you don't need to worry about "nicely" scaling the numerical properties
     of the log-sum-exp computation, but can just compute this directly.
@@ -66,13 +67,13 @@ def softmax_loss(Z, y_one_hot):
     logSum = ndl.log(ndl.summation(expZ, axes=1))
     total = logSum - ndl.summation(Z * y_one_hot, axes=1)
     return ndl.summation(total) / Z.shape[0]
-    
+
     # z2 = ndl.log(ndl.summation(ndl.exp(Z), axes=(1)))
     # y2 = ndl.summation(ndl.multiply(Z, y_one_hot), axes=(1))
     # res = z2 -y2
     # res = ndl.divide_scalar(ndl.summation(res), res.shape[0])
     # return res
-    
+
     # n = Z.shape[0]
     # x = ndl.summation(ndl.exp(Z), axis = 1)
     # y = ndl.log(x).sum()
@@ -83,7 +84,7 @@ def softmax_loss(Z, y_one_hot):
     ### END YOUR SOLUTION
 
 
-def nn_epoch(X, y, W1, W2, lr = 0.1, batch=100):
+def nn_epoch(X, y, W1: Tensor, W2: Tensor, lr=0.1, batch=100):
     """ Run a single epoch of SGD for a two-layer neural network defined by the
     weights W1 and W2 (with no bias terms):
         logits = ReLU(X * W1) * W1
@@ -108,15 +109,32 @@ def nn_epoch(X, y, W1, W2, lr = 0.1, batch=100):
     """
 
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    iterations = X.shape[0] // batch
+    kClasses = W2.shape[1]
+
+    for i in range(iterations):
+        miniX = Tensor(X[i * batch: (i + 1) * batch])
+        miniYRaw = y[i * batch: (i + 1) * batch]
+        miniY = getOneHot(miniYRaw, kClasses)
+        z = ndl.relu(miniX@W1)@W2
+        loss = softmax_loss(z, miniY)
+        loss.backward()
+        W1 = Tensor(W1.numpy() - lr * W1.grad.numpy())
+        W2 = Tensor(W2.numpy() - lr * W2.grad.numpy())
+    return W1, W2
     ### END YOUR SOLUTION
 
 
+def getOneHot(y, kClasses):
+    targets = y.reshape(-1)
+    return np.eye(kClasses)[targets]
+
 ### CODE BELOW IS FOR ILLUSTRATION, YOU DO NOT NEED TO EDIT
 
-def loss_err(h,y):
+
+def loss_err(h, y):
     """ Helper function to compute both loss and error"""
     y_one_hot = np.zeros((y.shape[0], h.shape[-1]))
     y_one_hot[np.arange(y.size), y] = 1
     y_ = ndl.Tensor(y_one_hot)
-    return softmax_loss(h,y_).numpy(), np.mean(h.numpy().argmax(axis=1) != y)
+    return softmax_loss(h, y_).numpy(), np.mean(h.numpy().argmax(axis=1) != y)
