@@ -1,6 +1,6 @@
 """Core data structures."""
 import needle
-from typing import List, Optional, NamedTuple, Set, Tuple, Union
+from typing import Dict, List, Optional, NamedTuple, Set, Tuple, Union
 from collections import defaultdict, namedtuple
 import numpy
 

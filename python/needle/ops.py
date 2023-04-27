@@ -1,5 +1,7 @@
 """Operator implementations."""
 
+import functools
+import itertools
 from numbers import Number
 from typing import Optional, List
 from .autograd import NDArray
@@ -177,7 +179,14 @@ class BroadcastTo(TensorOp):
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
         input_shape = node.inputs[0].shape
-        return Tensor(array_api.ones(input_shape) * self.shape[1])
+        total = functools.reduce(
+            lambda product, pair: product * pair[1] // pair[0], 
+            itertools.zip_longest(reversed(input_shape), 
+                                  reversed(self.shape), 
+                                  fillvalue=1),
+            1)
+        return Tensor(array_api.ones(input_shape) * total)
+        
         ### END YOUR SOLUTION
 
 
@@ -212,8 +221,14 @@ class MatMul(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        lhs, rhs = node.inputs
-        return out_grad @ transpose(rhs), transpose(lhs) @ out_grad
+        a, b = node.inputs
+        da = out_grad @ transpose(b)
+        db = transpose(a) @ out_grad
+        if len(da.shape) is not len(a.shape):
+            da = summation(da, tuple(range(len(da.shape) - len(a.shape))))
+        if len(db.shape) is not len(b.shape):
+            db = summation(db, tuple(range(len(db.shape) - len(b.shape))))
+        return da, db        
         ### END YOUR SOLUTION
 
 
