@@ -382,13 +382,13 @@ class Tensor(Value):
     __rmatmul__ = __matmul__
 
 
-def compute_gradient_of_variables(output_tensor, out_grad):
+def compute_gradient_of_variables(output_tensor: Tensor, out_grad: Tensor):
     """Take gradient of output node with respect to each node in node_list.
 
     Store the computed result in the grad field of each Variable.
     """
     # a map from node to a list of gradient contributions from each output node
-    node_to_output_grads_list: Dict[Tensor, List[Tensor]] = {}
+    node_to_output_grads_list: Dict[Tensor, List[Tensor]] = defaultdict(list)
     # Special note on initializing gradient of
     # We are really taking a derivative of the scalar reduce_sum(output_node)
     # instead of the vector output_node. But this is the common case for loss function.
@@ -398,7 +398,13 @@ def compute_gradient_of_variables(output_tensor, out_grad):
     reverse_topo_order = list(reversed(find_topo_sort([output_tensor])))
 
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    for tensor in reverse_topo_order:
+        adjoint = sum(node_to_output_grads_list[tensor])
+        tensor.grad = adjoint
+        if tensor.op == None:
+            continue
+        for inputTensor, partialAdjoint in zip(tensor.inputs, tensor.op.gradient(adjoint, tensor)):
+            node_to_output_grads_list[inputTensor].append(partialAdjoint)
     ### END YOUR SOLUTION
 
 

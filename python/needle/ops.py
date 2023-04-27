@@ -34,7 +34,7 @@ class AddScalar(TensorOp):
         return a + self.scalar
 
     def gradient(self, out_grad: Tensor, node: Tensor):
-        return out_grad
+        return (out_grad,)
 
 
 def add_scalar(a, scalar):
@@ -120,7 +120,7 @@ class DivScalar(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        return out_grad / self.scalar
+        return (out_grad / self.scalar,)
         ### END YOUR SOLUTION
 
 
@@ -142,7 +142,7 @@ class Transpose(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        return transpose(out_grad, self.axes)
+        return (transpose(out_grad, self.axes),)
         ### END YOUR SOLUTION
 
 
@@ -161,7 +161,7 @@ class Reshape(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        return reshape(out_grad, self.shape[::-1])
+        return (reshape(out_grad, node.inputs[0].shape),)
         ### END YOUR SOLUTION
 
 
@@ -178,15 +178,17 @@ class BroadcastTo(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        input_shape = node.inputs[0].shape
-        total = functools.reduce(
-            lambda product, pair: product * pair[1] // pair[0], 
-            itertools.zip_longest(reversed(input_shape), 
-                                  reversed(self.shape), 
-                                  fillvalue=1),
-            1)
-        return Tensor(array_api.ones(input_shape) * total)
-        
+        ipt = node.inputs[0]
+        grad = out_grad
+        for _ in range(len(out_grad.shape) - len(ipt.shape)):
+            grad = summation(grad, axes=0)
+        for i, dim in enumerate(ipt.shape):
+            if dim == 1:
+                grad = grad.cached_data.sum(axis=i, keepdims=True)
+            grad = Tensor(grad)
+
+        grad = reshape(grad, ipt.shape)
+        return [grad]       
         ### END YOUR SOLUTION
 
 
@@ -205,7 +207,7 @@ class Summation(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        return Tensor(array_api.ones(node.inputs[0].shape))
+        return (Tensor(array_api.ones(node.inputs[0].shape)),)
         ### END YOUR SOLUTION
 
 
@@ -244,7 +246,7 @@ class Negate(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        return -out_grad
+        return (-out_grad,)
         ### END YOUR SOLUTION
 
 
